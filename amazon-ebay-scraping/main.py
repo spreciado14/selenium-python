@@ -11,7 +11,8 @@ service = Service(executable_path="/usr/local/bin/chromedriver")  # Specify the 
 driver = webdriver.Chrome(service=service)
 
 # Define the product to search for
-product = "wireless mouse"
+product_amazon = "wireless mouse"
+product_ebay = "wireless mouse"
 
 # Function to extract product data from a website
 def extract_amazon_product_data(url, search_term):
@@ -41,30 +42,30 @@ def extract_amazon_product_data(url, search_term):
 
 def extract_ebay_product_data(url, search_term):
     driver.get(url)
+
     search_box = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.ID, "gh-ac"))
+        EC.presence_of_element_located((By.CSS_SELECTOR, "#gh-ac"))
     )
     search_box.send_keys(search_term)
     search_box.submit()
 
     products = WebDriverWait(driver, 10).until(
-        EC.presence_of_all_elements_located((By.XPATH,"//*[@id='srp-river-results']"))
+        EC.presence_of_all_elements_located((By.CSS_SELECTOR, ".srp-results .s-item"))
     )
+
     data = []
     for product in products[:3]:
-        name_element = product.find_element(By.XPATH, "/html/body/div[5]/div[4]/div[3]/div[1]/div[2]/ul/li[2]/div/div[2]/a/div/span")
-        price_element = product.find_element(By.XPATH, "/html/body/div[5]/div[4]/div[3]/div[1]/div[2]/ul/li[2]/div/div[2]/div[2]/div[1]/span")
-
+        name_element = product.find_element(By.CSS_SELECTOR, ".s-item__title")
+        price_element = product.find_element(By.CSS_SELECTOR, ".s-item__price")
         name = name_element.text
         price = price_element.text
-
         data.append({"name": name, "price": price, "source": url})
 
     return data
 
 # Extract product data from Amazon and eBay
-amazon_data = extract_amazon_product_data("https://www.amazon.com", product)
-ebay_data = extract_ebay_product_data("https://www.ebay.com", product)
+amazon_data = extract_amazon_product_data("https://www.amazon.com", product_amazon)
+ebay_data = extract_ebay_product_data("https://www.ebay.com", product_ebay)
 
 # Combine the data from both websites
 all_data = amazon_data + ebay_data
